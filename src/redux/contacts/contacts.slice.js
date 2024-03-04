@@ -1,49 +1,67 @@
-import { createSlice, nanoid } from '@reduxjs/toolkit'
-import persistReducer from 'redux-persist/es/persistReducer'
-import storage from 'redux-persist/lib/storage'
+import { createSlice } from '@reduxjs/toolkit'
+import { MESSAGE_TYPES } from '../constants'
+import { addContact, deleteContact, fetchContacts } from './operations'
 
 const initialState = {
-	items: [
-		{ id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-		{ id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-		{ id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-		{ id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-	],
+	items: [],
+	isLoading: false,
+	error: null,
+	popupMessage: { text: null, type: MESSAGE_TYPES.INFO },
 }
 
 export const contactsSlice = createSlice({
 	name: 'contacts',
 	initialState,
 	reducers: {
-		addContact: {
-			reducer(state, { payload }) {
-				state.items.push(payload)
-			},
-			prepare({ name, number }) {
-				return {
-					payload: {
-						id: nanoid(),
-						name,
-						number,
-					},
+		popupMessageReset(state) {
+			state.popupMessage = initialState.popupMessage
+		},
+	},
+	extraReducers: builder => {
+		builder
+			.addCase(fetchContacts.pending, state => {
+				state.isLoading = true
+			})
+			.addCase(fetchContacts.fulfilled, (state, action) => {
+				state.isLoading = false
+				state.error = null
+				state.items = action.payload
+			})
+			.addCase(fetchContacts.rejected, (state, action) => {
+				state.isLoading = false
+				state.error = action.payload
+			})
+			.addCase(addContact.fulfilled, (state, { payload }) => {
+				state.popupMessage = {
+					text: `Контакт ${payload.name} успішно додано`,
+					type: MESSAGE_TYPES.SUCCESS,
 				}
-			},
-		},
-		deleteContact(state, { payload }) {
-			const index = state.items.findIndex(contact => contact.id === payload)
-			state.items.splice(index, 1)
-		},
+				state.items.push(payload)
+				console.log(payload)
+			})
+			.addCase(addContact.rejected, (state, { payload }) => {
+				state.popupMessage = {
+					text: `При створенні контакту ${payload.name} сталася помилка: 
+				${payload}`,
+					type: MESSAGE_TYPES.ERROR,
+				}
+			})
+			.addCase(deleteContact.fulfilled, (state, { payload }) => {
+				state.popupMessage = {
+					text: `Контакт ${payload.name} успішно видалено`,
+					type: MESSAGE_TYPES.SUCCESS,
+				}
+				state.items = state.items.filter(contact => contact.id !== payload.id)
+			})
+			.addCase(deleteContact.rejected, (state, { payload }) => {
+				state.popupMessage = {
+					text: `При видаленні контакту ${payload.name} сталася помилка: 
+				${payload}`,
+					type: MESSAGE_TYPES.ERROR,
+				}
+			})
 	},
 })
 
-export const { addContact, deleteContact } = contactsSlice.actions
-
-const persistConfig = {
-	key: 'contacts',
-	storage,
-}
-
-export const contactReducer = persistReducer(
-	persistConfig,
-	contactsSlice.reducer
-)
+export const { popupMessageReset } = contactsSlice.actions
+export const contactReducer = contactsSlice.reducer

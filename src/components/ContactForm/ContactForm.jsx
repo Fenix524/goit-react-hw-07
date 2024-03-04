@@ -3,9 +3,10 @@ import { ErrorMessage, Field, Form, Formik } from 'formik'
 import * as Yup from 'yup'
 import css from './ContactForm.module.css'
 
+import { nanoid } from '@reduxjs/toolkit'
 import { useId } from 'react'
 import { useDispatch } from 'react-redux'
-import { addContact } from '../../redux/contacts/contacts.slice'
+import { addContact } from '../../redux/contacts/operations'
 
 const ContactForm = () => {
 	const contactNameId = useId()
@@ -30,7 +31,9 @@ const ContactForm = () => {
 	const dispatch = useDispatch()
 	const onSubmit = (values, actions) => {
 		const { contactname, contactphone } = values
-		dispatch(addContact({ name: contactname, number: contactphone }))
+		dispatch(
+			addContact({ id: nanoid(), name: contactname, phone: contactphone })
+		)
 
 		actions.resetForm()
 	}

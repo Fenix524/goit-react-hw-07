@@ -1,11 +1,12 @@
 import { useDispatch, useSelector } from 'react-redux'
 import { setFilter } from '../../redux/filters/filters.slice'
+import { selectFilter } from '../../redux/filters/selectors'
 import css from './SearchBox.module.css'
-import { getFilter } from '../../redux/filters/selectors'
 
 const SearchBox = () => {
 	const dispatch = useDispatch()
-	const searchFilters = useSelector(getFilter)
+	const searchFilters = useSelector(selectFilter)
+
 	return (
 		<div className={css.SearchBox}>
 			<p className={css.text}>Find contacts by name</p>
